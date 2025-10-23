@@ -1,0 +1,39 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('films', function (Blueprint $table) {
+            $table->id();
+            $table->string('judul');
+            $table->string('poster');
+            $table->string('trailer');
+            $table->text('deskripsi');
+            $table->string('genre');
+            $table->integer('durasi');
+            $table->string('Rating_Usia');
+            $table->string('Rating_Film');
+            $table->string('Director');
+            $table->text('cast');
+            $table->enum('status',['Now_playing','Comming_soon','History']);
+            $table->enum('is_publish',['draft','publish']);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('films');
+    }
+};

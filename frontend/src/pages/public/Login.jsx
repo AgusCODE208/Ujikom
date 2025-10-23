@@ -1,11 +1,62 @@
-import React from 'react';
-import { Film } from 'lucide-react';
+import React, { useState } from 'react';
+import { Film, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { authService } from '../../services/endpoints/auth';
+import useAuthStore from '../../stores/useAuthStore';
+import { ROLE_ROUTES } from '../../constants/role';
 
-const Login = ({ setCurrentView, setIsLoggedIn }) => {
-  const handleLogin = (e) => {
+const Login = ({ setCurrentView, previousView }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const setAuth = useAuthStore(state => state.setAuth);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setIsLoggedIn(true);
-    setCurrentView('home');
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await authService.login({ email, password });
+      
+      if (response.success) {
+        const { user, token } = response.data;
+        setAuth(user, token);
+
+        // Redirect berdasarkan role
+        const userRole = user.roles[0];
+        if (userRole === 'admin') {
+          setCurrentView('admin');
+        } else if (userRole === 'kasir') {
+          setCurrentView('kasir');
+        } else if (userRole === 'owner') {
+          setCurrentView('owner');
+        } else {
+          // User biasa ke home
+          setCurrentView('home');
+        }
+      } else {
+        setError(response.message || 'Login gagal');
+      }
+    } catch (err) {
+      // Handle validation errors (422)
+      if (err.response?.status === 422) {
+        const errors = err.response?.data?.errors;
+        if (errors?.email) {
+          setError(errors.email[0]);
+        } else {
+          setError('Email atau password salah');
+        }
+      } else if (err.response?.status === 403) {
+        setError(err.response?.data?.message || 'Akun Anda tidak aktif');
+      } else {
+        const errorMsg = err.response?.data?.message || 'Email atau password salah';
+        setError(errorMsg);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,6 +73,8 @@ const Login = ({ setCurrentView, setIsLoggedIn }) => {
             <label className="block text-sm font-medium mb-2">Email</label>
             <input
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-red-500 focus:outline-none"
               placeholder="your@email.com"
               required
@@ -30,16 +83,44 @@ const Login = ({ setCurrentView, setIsLoggedIn }) => {
 
           <div>
             <label className="block text-sm font-medium mb-2">Password</label>
-            <input
-              type="password"
-              className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-red-500 focus:outline-none"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-red-500 focus:outline-none pr-12"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
-          <button type="submit" className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition">
-            Login
+          {error && (
+            <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Logging in...</span>
+              </>
+            ) : (
+              'Login'
+            )}
           </button>
         </form>
 

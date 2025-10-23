@@ -66,6 +66,34 @@ const FilmDetail = ({ onNavigate, selectedFilm }) => {
               <p className="text-gray-400">{selectedFilm.rating_usia}</p>
             </div>
 
+            {selectedFilm.director && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Director</h3>
+                <p className="text-gray-400">{selectedFilm.director}</p>
+              </div>
+            )}
+
+            {selectedFilm.cast && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Cast</h3>
+                <p className="text-gray-400">{selectedFilm.cast}</p>
+              </div>
+            )}
+
+            {selectedFilm.trailer_url && (
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Trailer</h3>
+                <a 
+                  href={selectedFilm.trailer_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-red-500 hover:text-red-400 underline"
+                >
+                  {selectedFilm.trailer_url}
+                </a>
+              </div>
+            )}
+
             {selectedFilm.deskripsi && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">Deskripsi</h3>

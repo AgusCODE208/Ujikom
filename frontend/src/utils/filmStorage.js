@@ -13,8 +13,12 @@ const INITIAL_FILMS = [
     durasi: 150,
     rating_usia: "13+",
     poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop",
+    trailer_url: "https://www.youtube.com/watch?v=u3V5KDHRQvk",
+    director: "James Gunn",
+    cast: "Chris Pratt, Zoe Saldana, Dave Bautista, Karen Gillan",
     status: "now_playing",
-    rating: 8.5
+    rating: 8.5,
+    publishStatus: "publish"
   },
   {
     id: 2,
@@ -24,8 +28,12 @@ const INITIAL_FILMS = [
     durasi: 135,
     rating_usia: "SU",
     poster: "https://images.unsplash.com/photo-1594908900066-3f47337549d8?w=400&h=600&fit=crop",
+    trailer_url: "https://www.youtube.com/watch?v=kpGo2_d3oYE",
+    director: "Rob Marshall",
+    cast: "Halle Bailey, Jonah Hauer-King, Melissa McCarthy, Javier Bardem",
     status: "now_playing",
-    rating: 7.8
+    rating: 7.8,
+    publishStatus: "publish"
   },
   {
     id: 3,
@@ -35,8 +43,12 @@ const INITIAL_FILMS = [
     durasi: 140,
     rating_usia: "13+",
     poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=600&fit=crop",
+    trailer_url: "https://www.youtube.com/watch?v=shW9i6k8cB0",
+    director: "Joaquim Dos Santos, Kemp Powers, Justin K. Thompson",
+    cast: "Shameik Moore, Hailee Steinfeld, Oscar Isaac, Jake Johnson",
     status: "coming_soon",
-    rating: 9.1
+    rating: 9.1,
+    publishStatus: "publish"
   }
 ];
 
@@ -65,7 +77,8 @@ export const addFilm = (filmData) => {
       ...filmData,
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       durasi: parseInt(filmData.durasi) || 0,
-      rating: parseFloat(filmData.rating) || 0
+      rating: parseFloat(filmData.rating) || 0,
+      publishStatus: 'draft'
     };
     films.push(newFilm);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(films));
@@ -154,5 +167,31 @@ export const getFilmById = (id) => {
   } catch (error) {
     console.error('Error getting film by id:', error);
     return null;
+  }
+};
+
+export const getPublishedFilms = () => {
+  try {
+    const films = getFilms();
+    return films.filter(f => f.publishStatus === 'publish');
+  } catch (error) {
+    console.error('Error getting published films:', error);
+    return [];
+  }
+};
+
+export const updatePublishStatus = (id, publishStatus) => {
+  try {
+    const films = getFilms();
+    const index = films.findIndex(f => f.id === id || f.id == id);
+    if (index !== -1) {
+      films[index].publishStatus = publishStatus;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(films));
+      return films[index];
+    }
+    return null;
+  } catch (error) {
+    console.error('Error updating publish status:', error);
+    throw error;
   }
 };

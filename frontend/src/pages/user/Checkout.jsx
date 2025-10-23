@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Film, ChevronLeft, CreditCard, Wallet, Building2, CheckCircle, Clock, MapPin, Calendar, Armchair, User, Mail, Phone, AlertCircle } from 'lucide-react';
 import SuccessModal from '../../components/SuccessModal';
+import { addTransaksi } from '../../utils/transaksiStorage';
 
-const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeatsCount, setUserTickets }) => {
+const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setUserTickets }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [formData, setFormData] = useState({
     nama: '',
@@ -13,6 +14,23 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  if (!checkoutData || !checkoutData.filmDetail || !checkoutData.selectedJadwal) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <CreditCard className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400">Data checkout tidak lengkap</p>
+          <button
+            onClick={() => setCurrentView('home')}
+            className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
+          >
+            Kembali ke Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -21,7 +39,7 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
     }).format(amount);
   };
 
-  const totalHarga = checkoutData.selectedSeats.length * checkoutData.selectedJadwal.harga;
+  const totalHarga = checkoutData.selectedSeats.length * (checkoutData.selectedJadwal.harga?.harga || 0);
   const adminFee = 2500;
   const grandTotal = totalHarga + adminFee;
 
@@ -57,10 +75,29 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
     setTimeout(() => {
       setIsProcessing(false);
       setBookedSeats(prev => [...prev, ...checkoutData.selectedSeats]);
-      setBookedSeatsCount(prev => ({
-        ...prev,
-        [checkoutData.selectedJadwal.id]: (prev[checkoutData.selectedJadwal.id] || 0) + checkoutData.selectedSeats.length
-      }));
+      
+      // Save to transaksiStorage
+      const transaksi = {
+        kode_booking: checkoutData.kode_booking,
+        film_id: checkoutData.filmDetail.id,
+        film_judul: checkoutData.filmDetail.judul,
+        jadwal_id: checkoutData.selectedJadwal.id,
+        tanggal: checkoutData.selectedDate.tanggal,
+        jam_mulai: checkoutData.selectedJadwal.jam_mulai,
+        studio: checkoutData.selectedJadwal.studio?.nama_studio,
+        kursi: checkoutData.selectedSeats,
+        jumlah_tiket: checkoutData.selectedSeats.length,
+        harga_satuan: checkoutData.selectedJadwal.harga?.harga,
+        total_harga: grandTotal,
+        metode_pembayaran: paymentMethod,
+        customer_nama: formData.nama,
+        customer_email: formData.email,
+        customer_telepon: formData.no_hp,
+        kasir: 'User Online',
+        status: 'success',
+        created_at: new Date().toISOString()
+      };
+      addTransaksi(transaksi);
       
       const newTicket = {
         id: Date.now(),
@@ -73,9 +110,9 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
         jadwal: {
           tanggal: checkoutData.selectedDate.tanggal,
           hari: checkoutData.selectedDate.hari,
-          jam: checkoutData.selectedJadwal.jam,
-          studio: checkoutData.selectedJadwal.studio,
-          tipe: checkoutData.selectedJadwal.tipe
+          jam: checkoutData.selectedJadwal.jam_mulai,
+          studio: checkoutData.selectedJadwal.studio?.nama_studio,
+          tipe: checkoutData.selectedJadwal.studio?.tipe
         },
         seats: checkoutData.selectedSeats,
         user: formData
@@ -199,7 +236,7 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
               <div className="space-y-3">
                 {paymentMethods.map((method) => (
                   <button
-                    key={method.id}
+                    key={`payment-${method.id}`}
                     onClick={() => setPaymentMethod(method.id)}
                     className={`w-full p-4 rounded-lg border-2 transition flex items-center gap-4 ${
                       paymentMethod === method.id
@@ -207,7 +244,7 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
                         : 'bg-gray-700 border-gray-600 hover:border-red-500'
                     }`}
                   >
-                    <div className={`${paymentMethod === method.id ? 'text-red-500' : 'text-gray-400'}`}>
+                    <div className={`${paymentMethod === method.id ? 'text-red-500' : 'text-gray-400'}`} aria-hidden="true">
                       {method.icon}
                     </div>
                     <div className="flex-1 text-left">
@@ -287,7 +324,7 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
                     <div className="font-semibold">
                       {checkoutData.selectedDate.hari}, {checkoutData.selectedDate.tanggal}
                     </div>
-                    <div className="font-semibold">{checkoutData.selectedJadwal.jam}</div>
+                    <div className="font-semibold">{checkoutData.selectedJadwal.jam_mulai || 'N/A'}</div>
                   </div>
                 </div>
 
@@ -296,10 +333,10 @@ const Checkout = ({ setCurrentView, checkoutData, setBookedSeats, setBookedSeats
                   <div>
                     <div className="text-gray-400">Studio</div>
                     <div className="font-semibold">
-                      {checkoutData.selectedJadwal.studio}
+                      {checkoutData.selectedJadwal.studio?.nama_studio || 'N/A'}
                     </div>
                     <div className="text-xs text-gray-400">
-                      {checkoutData.selectedJadwal.tipe}
+                      {checkoutData.selectedJadwal.studio?.tipe || 'Regular'}
                     </div>
                   </div>
                 </div>

@@ -10,6 +10,9 @@ const FilmEdit = ({ onNavigate, selectedFilm }) => {
     durasi: '',
     rating_usia: 'SU',
     poster: '',
+    trailer_url: '',
+    director: '',
+    cast: '',
     status: 'now_playing',
     rating: 0
   });
@@ -127,6 +130,41 @@ const FilmEdit = ({ onNavigate, selectedFilm }) => {
                 <option value="ended">Ended</option>
               </select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Director</label>
+              <input
+                type="text"
+                value={formData.director || ''}
+                onChange={(e) => setFormData({...formData, director: e.target.value})}
+                placeholder="Director name"
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:border-red-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Trailer URL (YouTube)</label>
+              <input
+                type="url"
+                value={formData.trailer_url || ''}
+                onChange={(e) => setFormData({...formData, trailer_url: e.target.value})}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:border-red-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Cast</label>
+            <input
+              type="text"
+              value={formData.cast || ''}
+              onChange={(e) => setFormData({...formData, cast: e.target.value})}
+              placeholder="Actor 1, Actor 2, Actor 3"
+              className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:border-red-500 focus:outline-none"
+            />
           </div>
 
           <div>

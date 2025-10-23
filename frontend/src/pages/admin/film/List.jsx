@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye, Edit, Trash2, Star, RotateCcw, Film } from 'lucide-react';
-import { getFilms, deleteFilm } from '../../../utils/filmStorage';
+import { getFilms, deleteFilm, updatePublishStatus } from '../../../utils/filmStorage';
 
 const FilmList = ({ onNavigate }) => {
   const [films, setFilms] = useState([]);
@@ -30,6 +30,11 @@ const FilmList = ({ onNavigate }) => {
       loadFilms();
       alert('Film berhasil dihapus!');
     }
+  };
+
+  const handlePublishStatusChange = (filmId, newStatus) => {
+    updatePublishStatus(filmId, newStatus);
+    loadFilms();
   };
 
   return (
@@ -84,12 +89,13 @@ const FilmList = ({ onNavigate }) => {
               <th className="px-6 py-4 text-left">Durasi</th>
               <th className="px-6 py-4 text-left">Rating</th>
               <th className="px-6 py-4 text-left">Status</th>
+              <th className="px-6 py-4 text-left">Publish</th>
               <th className="px-6 py-4 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredFilms.map((film) => (
-              <tr key={film.id} className="border-t border-gray-700 hover:bg-gray-750">
+              <tr key={`film-row-${film.id}`} className="border-t border-gray-700 hover:bg-gray-750">
                 <td className="px-6 py-4">
                   <img src={film.poster} alt={film.judul} className="w-12 h-16 object-cover rounded" />
                 </td>
@@ -110,6 +116,18 @@ const FilmList = ({ onNavigate }) => {
                     {film.status === 'now_playing' ? 'Now Playing' :
                      film.status === 'coming_soon' ? 'Coming Soon' : 'Ended'}
                   </span>
+                </td>
+                <td className="px-6 py-4">
+                  <select
+                    value={film.publishStatus || 'draft'}
+                    onChange={(e) => handlePublishStatusChange(film.id, e.target.value)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold border-0 cursor-pointer ${
+                      (film.publishStatus || 'draft') === 'publish' ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'
+                    }`}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="publish">Publish</option>
+                  </select>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
@@ -142,7 +160,7 @@ const FilmList = ({ onNavigate }) => {
       {/* Mobile/Tablet Cards */}
       <div className="lg:hidden space-y-4">
         {filteredFilms.map((film) => (
-          <div key={film.id} className="bg-gray-800 rounded-lg p-4">
+          <div key={`film-card-${film.id}`} className="bg-gray-800 rounded-lg p-4">
             <div className="flex gap-4">
               <img src={film.poster} alt={film.judul} className="w-20 h-28 object-cover rounded flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -161,6 +179,18 @@ const FilmList = ({ onNavigate }) => {
                     {film.status === 'now_playing' ? 'Playing' :
                      film.status === 'coming_soon' ? 'Soon' : 'Ended'}
                   </span>
+                </div>
+                <div className="mb-3">
+                  <select
+                    value={film.publishStatus || 'draft'}
+                    onChange={(e) => handlePublishStatusChange(film.id, e.target.value)}
+                    className={`w-full px-3 py-1 rounded-lg text-xs font-semibold border-0 cursor-pointer ${
+                      (film.publishStatus || 'draft') === 'publish' ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'
+                    }`}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="publish">Publish</option>
+                  </select>
                 </div>
                 <div className="flex gap-2">
                   <button

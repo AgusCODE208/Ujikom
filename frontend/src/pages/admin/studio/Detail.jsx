@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Edit, Users, Maximize, Film, Check } from 'lucide-react';
+import { ArrowLeft, Edit, Users, Maximize, Film, Check, Armchair } from 'lucide-react';
 import { getKursiByStudio } from '../../../utils/studioStorage';
 
 const StudioDetail = ({ onNavigate, selectedStudio }) => {
@@ -39,25 +39,46 @@ const StudioDetail = ({ onNavigate, selectedStudio }) => {
 
   const renderSeatLayout = () => {
     const { rows, cols } = selectedStudio.layout;
+    const rowLabels = Array.from({ length: rows }, (_, i) => String.fromCharCode(65 + i));
     const seats = [];
     
+    // Header dengan nomor kolom
+    seats.push(
+      <div key="header" className="flex items-center gap-2 mb-2">
+        <div className="w-8"></div>
+        <div className="flex gap-2">
+          {Array.from({ length: cols }, (_, i) => (
+            <div key={i} className="w-8 sm:w-10 text-center text-xs font-bold text-gray-400">
+              {i + 1}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+    
+    // Baris kursi
     for (let i = 0; i < rows; i++) {
       const row = [];
       for (let j = 0; j < cols; j++) {
         const kursi = kursis.find(k => k.row === i && k.col === j);
-        const seatColor = kursi && kursi.status === 'tidak_tersedia' ? 'bg-gray-600' : 'bg-green-600';
+        const seatColor = kursi && kursi.status === 'tidak_tersedia' ? 'bg-red-600' : 'bg-gray-700';
         
         row.push(
           <div
             key={`${i}-${j}`}
-            className={`w-4 h-4 sm:w-6 sm:h-6 ${seatColor} rounded-t-lg border border-green-700`}
+            className={`w-8 h-8 sm:w-10 sm:h-10 ${seatColor} rounded-lg flex items-center justify-center transition-all`}
             title={kursi ? `${kursi.kode_kursi} - ${kursi.status}` : 'Tidak ada'}
-          />
+          >
+            <Armchair className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
         );
       }
       seats.push(
-        <div key={i} className="flex space-x-1 mb-1">
-          {row}
+        <div key={i} className="flex items-center gap-2">
+          <div className="w-8 text-center font-bold text-gray-400">{rowLabels[i]}</div>
+          <div className="flex gap-2">
+            {row}
+          </div>
         </div>
       );
     }
@@ -135,24 +156,27 @@ const StudioDetail = ({ onNavigate, selectedStudio }) => {
         <div>
           <h3 className="text-lg font-semibold mb-4">Preview Layout Kursi</h3>
           <div className="bg-gray-700 rounded-lg p-4 sm:p-6">
-            <div className="mb-4 text-center">
-              <div className="inline-block bg-gray-600 px-6 sm:px-8 py-2 rounded text-sm font-semibold">
-                LAYAR
-              </div>
+            <div className="mb-6">
+              <div className="w-full h-2 bg-gradient-to-r from-transparent via-gray-600 to-transparent rounded-full mb-2"></div>
+              <div className="text-center text-gray-400 text-sm">LAYAR</div>
             </div>
             <div className="flex justify-center overflow-x-auto">
-              <div className="inline-block">
+              <div className="inline-block space-y-3">
                 {renderSeatLayout()}
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-center space-x-4 sm:space-x-6 text-xs sm:text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-600 rounded-t-lg"></div>
-                <span>Tersedia</span>
+            <div className="mt-6 flex items-center justify-center gap-4 sm:gap-8 p-4 bg-gray-800 rounded-lg flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center">
+                  <Armchair className="w-5 h-5" />
+                </div>
+                <span className="text-sm">Tersedia</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-gray-600 rounded-t-lg"></div>
-                <span>Tidak Tersedia</span>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                  <Armchair className="w-5 h-5" />
+                </div>
+                <span className="text-sm">Tidak Tersedia</span>
               </div>
             </div>
           </div>

@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Film, Calendar, Clock, Star, Search, History } from 'lucide-react';
-import { getFilms } from '../../utils/filmStorage';
+import { getPublishedFilms } from '../../utils/filmStorage';
 import Footer from '../../components/Footer';
 
-const Home = ({ setCurrentView }) => {
+const Home = ({ setCurrentView, setSelectedFilmId }) => {
   const [selectedTab, setSelectedTab] = useState('now_playing');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [films, setFilms] = useState([]);
 
   useEffect(() => {
-    setFilms(getFilms());
+    setFilms(getPublishedFilms());
   }, []);
 
   const heroImages = films.slice(0, 5).map(film => film.poster);
 
   useEffect(() => {
+    if (heroImages.length === 0) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroImages.length);
     }, 3000);
@@ -31,12 +32,12 @@ const Home = ({ setCurrentView }) => {
   return (
     <div>
       {/* Hero Section with Carousel */}
-      <div className="relative h-96 overflow-hidden" data-aos="fade-down">
+      <div className="relative h-[500px] md:h-96 overflow-hidden" data-aos="fade-down">
         {/* Carousel Background */}
         <div className="absolute inset-0">
           {heroImages.map((image, index) => (
             <div
-              key={index}
+              key={`hero-${index}`}
               className={`absolute inset-0 transition-opacity duration-1000 ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
               }`}
@@ -123,7 +124,10 @@ const Home = ({ setCurrentView }) => {
           {filteredFilms.map((film, index) => (
             <div 
               key={film.id} 
-              onClick={() => setCurrentView('filmdetail')}
+              onClick={() => {
+                setSelectedFilmId(film.id);
+                setCurrentView('filmdetail');
+              }}
               className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer"
               data-aos="fade-up"
               data-aos-delay={index * 100}
@@ -157,6 +161,7 @@ const Home = ({ setCurrentView }) => {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
+                        setSelectedFilmId(film.id);
                         setCurrentView('filmdetail');
                       }}
                       className="bg-red-600 hover:bg-red-700 text-white px-4 py-1 rounded text-sm font-semibold transition"

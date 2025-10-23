@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Film, Users, Calendar, DollarSign, Ticket, LayoutDashboard, Armchair, LogOut, Menu, ChevronLeft } from 'lucide-react';
+import useAuthStore from '../stores/useAuthStore';
+import { authService } from '../services/endpoints/auth';
 import Dashboard from '../pages/admin/Dashboard';
 import FilmList from '../pages/admin/film/List';
 import FilmTambah from '../pages/admin/film/Tambah';
@@ -16,6 +18,16 @@ import StudioTambah from '../pages/admin/studio/Tambah';
 import StudioEdit from '../pages/admin/studio/Edit';
 import StudioDetail from '../pages/admin/studio/Detail';
 import StudioRestore from '../pages/admin/studio/Restore';
+import JadwalList from '../pages/admin/jadwal/List';
+import JadwalTambah from '../pages/admin/jadwal/Tambah';
+import JadwalEdit from '../pages/admin/jadwal/Edit';
+import JadwalDetail from '../pages/admin/jadwal/Detail';
+import JadwalRestore from '../pages/admin/jadwal/Restore';
+import HargaList from '../pages/admin/harga/List';
+import HargaTambah from '../pages/admin/harga/Tambah';
+import HargaEdit from '../pages/admin/harga/Edit';
+import HargaDetail from '../pages/admin/harga/Detail';
+import HargaRestore from '../pages/admin/harga/Restore';
 
 const AdminLayout = ({ onLogout }) => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -27,116 +39,184 @@ const AdminLayout = ({ onLogout }) => {
     if (data) setSelectedFilm(data);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm('Apakah Anda yakin ingin logout?')) {
-      onLogout();
+      try {
+        await authService.logout();
+      } catch (err) {
+        // Silent fail
+      } finally {
+        useAuthStore.getState().clearAuth();
+        onLogout();
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex">
       {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <div 
+        className={`lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
 
       {/* Sidebar */}
-      <aside className={`bg-gray-800 transition-all duration-300 ${
-        sidebarOpen ? 'w-64' : 'w-20'
-      } flex flex-col fixed lg:relative h-full z-50 ${!sidebarOpen ? 'hidden lg:flex' : ''}`}>
-        <div className="p-4 flex items-center justify-between border-b border-gray-700">
-          {sidebarOpen && (
-            <div className="flex items-center space-x-2">
-              <Film className="w-8 h-8 text-red-500" />
-              <span className="text-xl font-bold">Admin Panel</span>
-            </div>
-          )}
+      <aside className={`bg-gray-800 transition-all duration-300 fixed lg:relative h-screen z-50 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      } ${
+        sidebarOpen ? 'w-64' : 'w-64 lg:w-20'
+      } flex flex-col overflow-hidden`}>
+        {/* Sidebar Header - Fixed */}
+        <div className="p-4 flex items-center justify-between border-b border-gray-700 bg-gray-800 shrink-0">
+          <div className="flex items-center space-x-2 min-w-0">
+            <Film className="w-8 h-8 text-red-500 shrink-0" />
+            <span className={`text-xl font-bold whitespace-nowrap overflow-hidden transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 lg:opacity-100 lg:w-0'
+            }`}>
+              Admin Panel
+            </span>
+          </div>
+          
+          {/* Close button for mobile */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition shrink-0"
+            aria-label="Close sidebar"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          {/* Toggle button for desktop */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition"
+            className="hidden lg:block p-2 hover:bg-gray-700 rounded-lg transition shrink-0"
+            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        {/* Sidebar Navigation - Scrollable */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <button
             onClick={() => setCurrentPage('dashboard')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
               currentPage === 'dashboard' ? 'bg-red-600' : 'hover:bg-gray-700'
             }`}
+            title="Dashboard"
           >
-            <LayoutDashboard className="w-5 h-5" />
-            {sidebarOpen && <span>Dashboard</span>}
+            <LayoutDashboard className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Dashboard</span>
           </button>
 
+          {/* URUTAN SESUAI ALUR SETUP */}
           <button
-            onClick={() => handleNavigate('film-list')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
-              currentPage.startsWith('film') ? 'bg-red-600' : 'hover:bg-gray-700'
+            onClick={() => handleNavigate('harga-list')}
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
+              currentPage.startsWith('harga') ? 'bg-red-600' : 'hover:bg-gray-700'
             }`}
+            title="Harga Tiket"
           >
-            <Film className="w-5 h-5" />
-            {sidebarOpen && <span>Manajemen Film</span>}
+            <DollarSign className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Harga Tiket</span>
           </button>
 
           <button
             onClick={() => handleNavigate('studio-list')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
               currentPage.startsWith('studio') ? 'bg-red-600' : 'hover:bg-gray-700'
             }`}
+            title="Studio & Kursi"
           >
-            <Armchair className="w-5 h-5" />
-            {sidebarOpen && <span>Manajemen Studio</span>}
+            <Armchair className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Studio & Kursi</span>
           </button>
 
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700 transition">
-            <Calendar className="w-5 h-5" />
-            {sidebarOpen && <span>Jadwal Film</span>}
+          <button
+            onClick={() => handleNavigate('film-list')}
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
+              currentPage.startsWith('film') ? 'bg-red-600' : 'hover:bg-gray-700'
+            }`}
+            title="Film"
+          >
+            <Film className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Film</span>
           </button>
 
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700 transition">
-            <DollarSign className="w-5 h-5" />
-            {sidebarOpen && <span>Harga Tiket</span>}
+          <button
+            onClick={() => handleNavigate('jadwal-list')}
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
+              currentPage.startsWith('jadwal') ? 'bg-red-600' : 'hover:bg-gray-700'
+            }`}
+            title="Jadwal Film"
+          >
+            <Calendar className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Jadwal Film</span>
           </button>
 
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700 transition">
-            <Ticket className="w-5 h-5" />
-            {sidebarOpen && <span>Transaksi</span>}
+          <div className="border-t border-gray-700 my-2"></div>
+
+          <button 
+            onClick={() => handleNavigate('transaksi-list')}
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg hover:bg-gray-700 transition`}
+            title="Transaksi"
+          >
+            <Ticket className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Transaksi</span>
           </button>
 
           <button
             onClick={() => handleNavigate('user-list')}
-            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition ${
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg transition ${
               currentPage.startsWith('user') ? 'bg-red-600' : 'hover:bg-gray-700'
             }`}
+            title="User"
           >
-            <Users className="w-5 h-5" />
-            {sidebarOpen && <span>Manajemen User</span>}
+            <Users className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>User</span>
           </button>
         </nav>
 
-        <div className="p-4 border-t border-gray-700">
+        {/* Sidebar Footer - Fixed */}
+        <div className="p-4 border-t border-gray-700 bg-gray-800 shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-600 transition"
+            className={`w-full flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'} px-4 py-3 rounded-lg hover:bg-red-600 transition`}
+            title="Logout"
           >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>Logout</span>}
+            <LogOut className="w-5 h-5 shrink-0" />
+            <span className={`whitespace-nowrap transition-all duration-300 ${
+              sidebarOpen ? 'opacity-100 w-auto' : 'opacity-0 w-0 overflow-hidden'
+            }`}>Logout</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto w-full">
-        <header className="bg-gray-800 px-4 sm:px-8 py-4 flex items-center justify-between border-b border-gray-700">
+      <main className="flex-1 w-full min-w-0 flex flex-col h-screen overflow-hidden">
+        {/* Header - Sticky */}
+        <header className="bg-gray-800 px-4 sm:px-8 py-4 flex items-center justify-between border-b border-gray-700 shrink-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-gray-700 rounded-lg transition"
+              aria-label="Open sidebar"
             >
               <Menu className="w-6 h-6" />
             </button>
@@ -158,6 +238,16 @@ const AdminLayout = ({ onLogout }) => {
               {currentPage === 'studio-edit' && 'Edit Studio'}
               {currentPage === 'studio-detail' && 'Detail Studio'}
               {currentPage === 'studio-restore' && 'Restore Studio'}
+              {currentPage === 'jadwal-list' && 'Manajemen Jadwal Film'}
+              {currentPage === 'jadwal-tambah' && 'Tambah Jadwal Baru'}
+              {currentPage === 'jadwal-edit' && 'Edit Jadwal'}
+              {currentPage === 'jadwal-detail' && 'Detail Jadwal'}
+              {currentPage === 'jadwal-restore' && 'Restore Jadwal'}
+              {currentPage === 'harga-list' && 'Manajemen Harga Tiket'}
+              {currentPage === 'harga-tambah' && 'Tambah Harga Baru'}
+              {currentPage === 'harga-edit' && 'Edit Harga'}
+              {currentPage === 'harga-detail' && 'Detail Harga'}
+              {currentPage === 'harga-restore' && 'Restore Harga'}
               </h1>
               <p className="text-gray-400 text-xs sm:text-sm">Welcome back, Admin!</p>
             </div>
@@ -173,7 +263,8 @@ const AdminLayout = ({ onLogout }) => {
           </div>
         </header>
 
-        <div className="p-4 sm:p-6 lg:p-8">
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {currentPage === 'dashboard' && <Dashboard onNavigate={handleNavigate} />}
           {currentPage === 'film-list' && <FilmList onNavigate={handleNavigate} />}
           {currentPage === 'film-tambah' && <FilmTambah onNavigate={handleNavigate} />}
@@ -190,6 +281,16 @@ const AdminLayout = ({ onLogout }) => {
           {currentPage === 'studio-edit' && <StudioEdit onNavigate={handleNavigate} selectedStudio={selectedFilm} />}
           {currentPage === 'studio-detail' && <StudioDetail onNavigate={handleNavigate} selectedStudio={selectedFilm} />}
           {currentPage === 'studio-restore' && <StudioRestore onNavigate={handleNavigate} />}
+          {currentPage === 'jadwal-list' && <JadwalList onNavigate={handleNavigate} />}
+          {currentPage === 'jadwal-tambah' && <JadwalTambah onNavigate={handleNavigate} />}
+          {currentPage === 'jadwal-edit' && <JadwalEdit onNavigate={handleNavigate} selectedJadwal={selectedFilm} />}
+          {currentPage === 'jadwal-detail' && <JadwalDetail onNavigate={handleNavigate} selectedJadwal={selectedFilm} />}
+          {currentPage === 'jadwal-restore' && <JadwalRestore onNavigate={handleNavigate} />}
+          {currentPage === 'harga-list' && <HargaList onNavigate={handleNavigate} />}
+          {currentPage === 'harga-tambah' && <HargaTambah onNavigate={handleNavigate} />}
+          {currentPage === 'harga-edit' && <HargaEdit onNavigate={handleNavigate} selectedHarga={selectedFilm} />}
+          {currentPage === 'harga-detail' && <HargaDetail onNavigate={handleNavigate} selectedHarga={selectedFilm} />}
+          {currentPage === 'harga-restore' && <HargaRestore onNavigate={handleNavigate} />}
         </div>
       </main>
     </div>

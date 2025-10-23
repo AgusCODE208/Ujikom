@@ -9,20 +9,52 @@ import Checkout from './pages/user/Checkout';
 import MyTicket from './pages/user/MyTicket';
 import Profile from './pages/user/Profile';
 import AdminLayout from './layouts/AdminLayout';
+import KasirLayout from './layouts/KasirLayout';
+import OwnerLayout from './layouts/OwnerLayout';
+import useAuthStore from './stores/useAuthStore';
 
 function App() {
   const [currentView, setCurrentView] = useState('home');
+  const [previousView, setPreviousView] = useState('home');
+  const [selectedFilmId, setSelectedFilmId] = useState(null);
   const [bookingData, setBookingData] = useState(null);
   const [checkoutData, setCheckoutData] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [bookedSeats, setBookedSeats] = useState([]);
-  const [bookedSeatsCount, setBookedSeatsCount] = useState({});
   const [userTickets, setUserTickets] = useState([]);
+  const { isAuthenticated, getRole } = useAuthStore();
+
+  const handleViewChange = (view) => {
+    setPreviousView(currentView);
+    setCurrentView(view);
+  };
+
+
 
   useEffect(() => {
     const path = window.location.pathname;
+    const role = getRole();
+    
     if (path === '/admin') {
-      setCurrentView('admin');
+      if (role === 'admin') {
+        setCurrentView('admin');
+      } else {
+        setCurrentView('home');
+        window.history.pushState({}, '', '/');
+      }
+    } else if (path === '/kasir') {
+      if (role === 'kasir') {
+        setCurrentView('kasir');
+      } else {
+        setCurrentView('home');
+        window.history.pushState({}, '', '/');
+      }
+    } else if (path === '/owner') {
+      if (role === 'owner') {
+        setCurrentView('owner');
+      } else {
+        setCurrentView('home');
+        window.history.pushState({}, '', '/');
+      }
     }
   }, []);
 
@@ -31,48 +63,81 @@ function App() {
     window.history.pushState({}, '', '/');
   };
 
+  const handleKasirLogout = () => {
+    setCurrentView('home');
+    window.history.pushState({}, '', '/');
+  };
+
+  const handleOwnerLogout = () => {
+    setCurrentView('home');
+    window.history.pushState({}, '', '/');
+  };
+
+  // Proteksi akses berdasarkan role
   if (currentView === 'admin') {
+    const role = getRole();
+    if (role !== 'admin') {
+      setCurrentView('home');
+      return null;
+    }
     return <AdminLayout onLogout={handleAdminLogout} />;
+  }
+
+  if (currentView === 'kasir') {
+    const role = getRole();
+    if (role !== 'kasir') {
+      setCurrentView('home');
+      return null;
+    }
+    return <KasirLayout onLogout={handleKasirLogout} />;
+  }
+
+  if (currentView === 'owner') {
+    const role = getRole();
+    if (role !== 'owner') {
+      setCurrentView('home');
+      return null;
+    }
+    return <OwnerLayout onLogout={handleOwnerLogout} />;
   }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {currentView !== 'filmdetail' && currentView !== 'pilihkursi' && currentView !== 'checkout' && currentView !== 'myticket' && currentView !== 'profile' && (
-        <Navbar setCurrentView={setCurrentView} isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+        <Navbar key={isAuthenticated ? 'auth' : 'guest'} setCurrentView={handleViewChange} />
       )}
       
-      {currentView === 'home' && <Home setCurrentView={setCurrentView} />}
-      {currentView === 'login' && <Login setCurrentView={setCurrentView} setIsLoggedIn={setIsLoggedIn} />}
-      {currentView === 'register' && <Register setCurrentView={setCurrentView} />}
-      {currentView === 'filmdetail' && <FilmDetail setCurrentView={setCurrentView} setBookingData={setBookingData} isLoggedIn={isLoggedIn} bookedSeatsCount={bookedSeatsCount} />}
-      {currentView === 'pilihkursi' && bookingData && isLoggedIn && (
+      {currentView === 'home' && <Home setCurrentView={handleViewChange} setSelectedFilmId={setSelectedFilmId} />}
+      {currentView === 'login' && <Login setCurrentView={handleViewChange} previousView={previousView} />}
+      {currentView === 'register' && <Register setCurrentView={handleViewChange} />}
+      {currentView === 'filmdetail' && <FilmDetail setCurrentView={handleViewChange} setBookingData={setBookingData} isLoggedIn={isAuthenticated} filmId={selectedFilmId} />}
+      {currentView === 'pilihkursi' && bookingData && (
         <PilihKursi 
-          setCurrentView={setCurrentView} 
+          setCurrentView={handleViewChange} 
           selectedJadwal={bookingData.selectedJadwal}
           selectedDate={bookingData.selectedDate}
           filmDetail={bookingData.filmDetail}
           setCheckoutData={setCheckoutData}
-          bookedSeats={bookedSeats}
+          bookedSeats={bookingData.bookedSeats || []}
         />
       )}
-      {currentView === 'checkout' && checkoutData && isLoggedIn && (
+      {currentView === 'checkout' && checkoutData && isAuthenticated && (
         <Checkout 
-          setCurrentView={setCurrentView}
+          setCurrentView={handleViewChange}
           checkoutData={checkoutData}
           setBookedSeats={setBookedSeats}
-          setBookedSeatsCount={setBookedSeatsCount}
           setUserTickets={setUserTickets}
         />
       )}
-      {currentView === 'myticket' && isLoggedIn && (
+      {currentView === 'myticket' && isAuthenticated && (
         <MyTicket 
-          setCurrentView={setCurrentView}
+          setCurrentView={handleViewChange}
           userTickets={userTickets}
         />
       )}
-      {currentView === 'profile' && isLoggedIn && (
+      {currentView === 'profile' && isAuthenticated && (
         <Profile 
-          setCurrentView={setCurrentView}
+          setCurrentView={handleViewChange}
         />
       )}
     </div>

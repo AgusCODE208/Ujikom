@@ -13,7 +13,7 @@ const INITIAL_USERS = [
     alamat: 'Jakarta, Indonesia',
     role: 'admin',
     foto: '',
-    createdAt: new Date().toISOString()
+    created_at: new Date().toISOString()
   },
   {
     id: '2',
@@ -23,7 +23,7 @@ const INITIAL_USERS = [
     alamat: 'Jakarta, Indonesia',
     role: 'owner',
     foto: '',
-    createdAt: new Date().toISOString()
+    created_at: new Date().toISOString()
   },
   {
     id: '3',
@@ -33,7 +33,7 @@ const INITIAL_USERS = [
     alamat: 'Jakarta, Indonesia',
     role: 'kasir',
     foto: '',
-    createdAt: new Date().toISOString()
+    created_at: new Date().toISOString()
   },
   {
     id: '4',
@@ -43,7 +43,7 @@ const INITIAL_USERS = [
     alamat: 'Bandung, Indonesia',
     role: 'user',
     foto: '',
-    createdAt: new Date().toISOString()
+    created_at: new Date().toISOString()
   }
 ];
 
@@ -70,7 +70,7 @@ export const addUser = (userData) => {
     const newUser = {
       ...userData,
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString()
     };
     users.push(newUser);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(users));

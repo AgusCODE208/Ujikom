@@ -152,7 +152,7 @@ const MyTicket = ({ setCurrentView, userTickets = [] }) => {
               
               return (
                 <div 
-                  key={ticket.id}
+                  key={`ticket-${ticket.id}`}
                   className="bg-gray-800 rounded-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
                 >
                   <div className="p-6">

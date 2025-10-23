@@ -103,7 +103,10 @@ const Dashboard = ({ onNavigate }) => {
               <Plus className="w-5 h-5" />
               <span>Tambah Film Baru</span>
             </button>
-            <button className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+            <button
+              onClick={() => onNavigate('jadwal-tambah')}
+              className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+            >
               <Calendar className="w-5 h-5" />
               <span>Buat Jadwal Baru</span>
             </button>

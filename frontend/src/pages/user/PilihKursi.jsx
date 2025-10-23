@@ -8,7 +8,7 @@ const generateSeats = (bookedSeats) => {
   rows.forEach(row => {
     for (let i = 1; i <= 10; i++) {
       const seatNumber = `${row}${i}`;
-      const isBooked = bookedSeats.includes(seatNumber) || Math.random() > 0.7;
+      const isBooked = bookedSeats.includes(seatNumber);
       seats.push({
         id: seatNumber,
         row: row,
@@ -22,8 +22,25 @@ const generateSeats = (bookedSeats) => {
 };
 
 const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, setCheckoutData, bookedSeats }) => {
-  const [seats, setSeats] = useState(generateSeats(bookedSeats));
+  const [seats, setSeats] = useState(generateSeats(bookedSeats || []));
   const [selectedSeats, setSelectedSeats] = useState([]);
+
+  if (!selectedJadwal || !selectedDate || !filmDetail) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <Armchair className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400">Data booking tidak lengkap</p>
+          <button
+            onClick={() => setCurrentView('home')}
+            className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
+          >
+            Kembali ke Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSeatClick = (seatId) => {
     const seat = seats.find(s => s.id === seatId);
@@ -50,7 +67,7 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
     }).format(amount);
   };
 
-  const totalPrice = selectedSeats.length * (selectedJadwal?.harga || 0);
+  const totalPrice = selectedSeats.length * (selectedJadwal?.harga?.harga || 0);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -87,11 +104,11 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
             </div>
             <div>
               <span className="text-gray-400">Time: </span>
-              <span className="font-semibold">{selectedJadwal.jam}</span>
+              <span className="font-semibold">{selectedJadwal.jam_mulai || 'N/A'}</span>
             </div>
             <div>
               <span className="text-gray-400">Studio: </span>
-              <span className="font-semibold">{selectedJadwal.studio} ({selectedJadwal.tipe})</span>
+              <span className="font-semibold">{selectedJadwal.studio?.nama_studio || 'N/A'} ({selectedJadwal.studio?.tipe || 'Regular'})</span>
             </div>
           </div>
         </div>
@@ -105,10 +122,10 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
 
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8"></div>
+                <div className="w-8" aria-hidden="true"></div>
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                    <div key={num} className="w-10 text-center text-xs font-bold text-gray-400">
+                    <div key={`col-${num}`} className="w-10 text-center text-xs font-bold text-gray-400">
                       {num}
                     </div>
                   ))}
@@ -116,14 +133,14 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
               </div>
               
               {['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(row => (
-                <div key={row} className="flex items-center gap-2">
+                <div key={`row-${row}`} className="flex items-center gap-2">
                   <div className="w-8 text-center font-bold text-gray-400">{row}</div>
                   <div className="flex gap-2">
                     {seats
                       .filter(seat => seat.row === row)
                       .map(seat => (
                         <button
-                          key={seat.id}
+                          key={`seat-${seat.id}`}
                           onClick={() => handleSeatClick(seat.id)}
                           disabled={seat.status === 'booked'}
                           className={`w-10 h-10 rounded-lg font-semibold text-xs transition-all ${
@@ -133,6 +150,7 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
                               ? 'bg-yellow-500 text-gray-900'
                               : 'bg-red-600 cursor-not-allowed'
                           }`}
+                          aria-label={`Seat ${seat.id} - ${seat.status}`}
                           title={seat.id}
                         >
                           <Armchair className="w-5 h-5 mx-auto" />
@@ -181,7 +199,7 @@ const PilihKursi = ({ setCurrentView, selectedJadwal, selectedDate, filmDetail, 
                 
                 <div>
                   <div className="text-sm text-gray-400 mb-1">Price per Seat</div>
-                  <div className="font-semibold">{formatCurrency(selectedJadwal.harga)}</div>
+                  <div className="font-semibold">{formatCurrency(selectedJadwal.harga?.harga || 0)}</div>
                 </div>
                 
                 <div className="border-t border-gray-700 pt-4">
